@@ -149,7 +149,18 @@ def users(id = 0):
             close_DB()
             
             if userdata:
-                container.append(userdata)
+                temp = {
+                    'id': userdata[0],
+                    'username': userdata[1],
+                    'nama_pengguna': userdata[2],
+                    'nomor_hp': userdata[3],
+                    'email': userdata[4],
+                    'role': userdata[5],
+                    'created_at': userdata[6],
+                    'updated_at': userdata[7]
+                }
+                
+                container.append(temp)
                 code = status.HTTP_200_OK
             else:
                 code = status.HTTP_204_NO_CONTENT
@@ -168,7 +179,18 @@ def users(id = 0):
             userdata = list()
             
             for r in res:
-                userdata.append(r)
+                temp = {
+                    'id': r[0],
+                    'username': r[1],
+                    'nama_pengguna': r[2],
+                    'nomor_hp': r[3],
+                    'email': r[4],
+                    'role': r[5],
+                    'created_at': r[6],
+                    'updated_at': r[7]
+                }
+                
+                userdata.append(temp)
                 
             if len(userdata) > 0:
                 container.append(userdata)
@@ -268,10 +290,15 @@ def roles(id = 0):
                 close_DB()
                 
                 for r in res:
-                    roles_data.append(r)
+                    temp = {
+                        'id': r[0],
+                        'nama': r[1]
+                    }
+                    
+                    roles_data.append(temp)
                     
                 if len(roles_data) > 0:
-                    container.append(roles_data)
+                    container = roles_data
                     code = status.HTTP_200_OK
                 else:
                     code = status.HTTP_204_NO_CONTENT
@@ -287,7 +314,12 @@ def roles(id = 0):
                 close_DB()
                 
                 if roles_data:
-                    container.append(roles_data)
+                    temp = {
+                        'id': roles_data[0],
+                        'nama': roles_data[1]
+                    }
+                    
+                    container = temp
                     code = status.HTTP_200_OK
                 else:
                     code = status.HTTP_204_NO_CONTENT
@@ -327,7 +359,18 @@ def projects(id = 0):
             close_DB()
             
             if projects_data:
-                container.append(projects_data)
+                temp = {
+                    'id': projects_data[0],
+                    'judul': projects_data[1],
+                    'owner': projects_data[2],
+                    'tanggal_mulai': projects_data[3],
+                    'tanggal_akhir': projects_data[4],
+                    'keterangan': projects_data[5],
+                    'created_at': projects_data[6],
+                    'updated_at': projects_data[7]
+                }
+                
+                container = projects_data
                 code = status.HTTP_200_OK
             else:
                 code = status.HTTP_204_NO_CONTENT
@@ -346,10 +389,21 @@ def projects(id = 0):
             projects_data = list()
             
             for r in res:
-                projects_data.append(r)
+                temp = {
+                    'id': r[0],
+                    'judul': r[1],
+                    'owner': r[2],
+                    'tanggal_mulai': r[3],
+                    'tanggal_akhir': r[4],
+                    'keterangan': r[5],
+                    'created_at': r[6],
+                    'updated_at': r[7]
+                }
+                
+                projects_data.append(temp)
                            
             if len(projects_data) > 0:
-                container.append(projects_data)
+                container = projects_data
                 code = status.HTTP_200_OK
             else:
                 code = status.HTTP_204_NO_CONTENT
@@ -445,7 +499,19 @@ def bugs(id = 0, id_dev = 0):
             close_DB()
             
             if bugs_data:
-                container.append(bugs_data)
+                temp = {
+                    'id': bugs_data[0],
+                    'judul': bugs_data[1],
+                    'keterangan': bugs_data[2],
+                    'proyek': bugs_data[3],
+                    'deadline': bugs_data[4],
+                    'status': bugs_data[5],
+                    'dampak': bugs_data[6],
+                    'created_at': bugs_data[7],
+                    'updated_at': bugs_data[8]
+                }
+                
+                container = temp
                 code = status.HTTP_200_OK
             else:
                 code = status.HTTP_204_NO_CONTENT
@@ -466,10 +532,22 @@ def bugs(id = 0, id_dev = 0):
             close_DB()
             
             for r in res:
-                bugs_data.append(r)
+                temp = {
+                    'id': r[0],
+                    'judul': r[1],
+                    'keterangan': r[2],
+                    'proyek': r[3],
+                    'deadline': r[4],
+                    'status': r[5],
+                    'dampak': r[6],
+                    'created_at': r[7],
+                    'updated_at': r[8]
+                }
+                
+                bugs_data.append(temp)
                 
             if len(bugs_data) > 0:
-                container.append(bugs_data)
+                container = bugs_data
                 code = status.HTTP_200_OK
             else:
                 code = status.HTTP_204_NO_CONTENT
@@ -484,10 +562,22 @@ def bugs(id = 0, id_dev = 0):
             bugs_data = list()
             
             for r in res:
-                bugs_data.append(r)
+                temp = {
+                    'id': r[0],
+                    'judul': r[1],
+                    'keterangan': r[2],
+                    'proyek': r[3],
+                    'deadline': r[4],
+                    'status': r[5],
+                    'dampak': r[6],
+                    'created_at': r[7],
+                    'updated_at': r[8]
+                }
+                
+                bugs_data.append(temp)
                 
             if len(bugs_data) > 0:
-                container.append(bugs_data)
+                container = bugs_data
                 code = status.HTTP_200_OK
             else:
                 code = status.HTTP_204_NO_CONTENT
@@ -591,11 +681,17 @@ def severity(id = 0):
         
         res = cursor.fetchall()
         for r in res:
-            temp = {'id': r[0], 'nama': r[1], 'created_at': r[2], 'updated_at': r[3]}
+            temp = {
+                'id': r[0],
+                'nama': r[1],
+                'created_at': r[2],
+                'updated_at': r[3]
+            }
+            
             severity_data.append(temp)    
         
         if len(severity_data) > 0:
-            container.append(severity_data)
+            container = severity_data
             code = status.HTTP_200_OK
         else:
             code = status.HTTP_204_NO_CONTENT
@@ -607,8 +703,82 @@ def severity(id = 0):
         
         severity_data = cursor.fetchone()
         
-        if len(severity_data) > 0:
-            container.append(severity_data)
+        if severity_data:
+            temp = {
+                'id': severity_data[0],
+                'nama': severity_data[1],
+                'created_at': severity_data[2],
+                'updated_at': severity_data[3]
+            }
+            
+            container = temp
+            code = status.HTTP_200_OK
+        else:
+            code = status.HTTP_204_NO_CONTENT
+            
+    else:
+        message = "Request not allowed"
+        error.append(message)
+        
+        code = status.HTTP_405_METHOD_NOT_ALLOWED
+        
+    meta = {'copyright': 'Copyright 2021 Memofy Dev'}
+        
+    result = {'code': code, 'data': container, 'errors': error, 'meta': meta}
+    
+    return jsonify(result), code
+
+
+@cross_origin()
+@app.route(DEFAULT_ROOT + '/status', methods=['GET'])
+@app.route(DEFAULT_ROOT + '/status/<id>', methods=['GET'])
+def bug_status(id = 0):
+    open_DB()
+    
+    container = []
+    error = []
+    meta = {}
+    code = ''
+    
+    if id == 0 and request.method == 'GET':
+        status_data = list()
+        
+        sql = "SELECT * FROM bug_status"
+        cursor.execute(sql)
+        
+        res = cursor.fetchall()
+        for r in res:
+            temp = {
+                'id': r[0],
+                'nama': r[1],
+                'created_at': r[2],
+                'updated_at': r[3]
+            }
+            
+            status_data.append(temp)    
+        
+        if len(status_data) > 0:
+            container = status_data
+            code = status.HTTP_200_OK
+        else:
+            code = status.HTTP_204_NO_CONTENT
+            
+    elif request.method == 'GET':
+        sql = "SELECT * FROM bug_status WHERE id=%s"
+        val = (id)
+        cursor.execute(sql, val)
+        
+        status_data = cursor.fetchone()
+        
+        if status_data:
+            temp = {
+                'id': status_data[0],
+                'nama': status_data[1],
+                'created_at': status_data[2],
+                'updated_at': status_data[3]
+            }
+            
+            container = temp
             code = status.HTTP_200_OK
         else:
             code = status.HTTP_204_NO_CONTENT
