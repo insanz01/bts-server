@@ -17,7 +17,7 @@ import pymysql.cursors
 import datetime
 
 # ============================================================================
-#                                 DATABASE
+#                                   DATABASE
 # ============================================================================
 #   Database Configuration
 #
@@ -90,6 +90,17 @@ def get_last_data(table):
     sql = "SELECT * FROM " + str(table) + " ORDER BY id DESC LIMIT 1"
     
     cursor.execute(sql)
+    response = cursor.fetchone()
+    
+    close_DB()
+    
+    return response
+
+def get_last_id(table):
+    open_DB()
+    sql = "SELECT * FROM " + str(table) + " ORDER BY id DESC LIMIT 1"
+    
+    cursor.execute(sql)
     data = cursor.fetchone()
     
     close_DB()
@@ -132,6 +143,7 @@ def index():
 @cross_origin()
 @app.route(DEFAULT_ROOT + '/users', methods=['POST', 'GET', 'PUT', 'DELETE'])
 @app.route(DEFAULT_ROOT + '/user/<id>', methods=['GET'])
+@app.route(DEFAULT_ROOT + '/user/<id>/activate', methods=['PATCH'])
 def users(id = 0):
     open_DB()
     
@@ -142,7 +154,7 @@ def users(id = 0):
     
     if id != 0:
         if request.method == 'GET':
-            sql = "SELECT users.id, users.username, users.nama_pengguna, users.nomor_hp, users.email, roles.nama as role, users.created_at, users.updated_at FROM users JOIN roles ON users.role_id = roles.id WHERE users.id=%s"
+            sql = "SELECT users.id, users.username, users.nama_pengguna, users.nomor_hp, users.email, roles.nama as role, users.is_active as active, users.created_at, users.updated_at FROM users JOIN roles ON users.role_id = roles.id WHERE users.id=%s"
             val = (id)
             cursor.execute(sql, val)
             userdata = cursor.fetchone()            
@@ -156,14 +168,30 @@ def users(id = 0):
                     'nomor_hp': userdata[3],
                     'email': userdata[4],
                     'role': userdata[5],
-                    'created_at': userdata[6],
-                    'updated_at': userdata[7]
+                    'active': userdata[6],
+                    'created_at': userdata[7],
+                    'updated_at': userdata[8]
                 }
                 
-                container.append(temp)
+                container = temp
                 code = status.HTTP_200_OK
             else:
                 code = status.HTTP_204_NO_CONTENT
+        
+        elif request.method == 'PATCH':
+            
+            last_data = get_last_data('users')
+            
+            activate = not last_data[7] # 7 is index for is_activate in table users
+            
+            sql = "UDPATE users SET is_activate=%s WHERE id=%s"
+            val = (activate, id)
+            
+            cursor.execute(sql, val)
+            conn.commit()
+            
+            code = status.HTTP_202_ACCEPTED
+        
         else:     
             message = "Request Not Allowed"
             error.append(message)
@@ -171,7 +199,7 @@ def users(id = 0):
     
     else:
         if request.method == 'GET':
-            sql = "SELECT users.id, users.username, users.nama_pengguna, users.nomor_hp, users.email, roles.nama as role, users.created_at, users.updated_at FROM users JOIN roles ON users.role_id = roles.id"
+            sql = "SELECT users.id, users.username, users.nama_pengguna, users.nomor_hp, users.email, roles.nama as role, users.is_active as active users.created_at, users.updated_at FROM users JOIN roles ON users.role_id = roles.id"
             cursor.execute(sql)
             res = cursor.fetchall()
             close_DB()
@@ -186,14 +214,15 @@ def users(id = 0):
                     'nomor_hp': r[3],
                     'email': r[4],
                     'role': r[5],
-                    'created_at': r[6],
-                    'updated_at': r[7]
+                    'active': r[6],
+                    'created_at': r[7],
+                    'updated_at': r[8]
                 }
                 
                 userdata.append(temp)
                 
             if len(userdata) > 0:
-                container.append(userdata)
+                container = userdata
                 code = status.HTTP_200_OK
             else:
                 code = status.HTTP_204_NO_CONTENT
@@ -207,11 +236,12 @@ def users(id = 0):
             nomor_hp = userdata['nomor_hp']
             email = userdata['email']
             role_id = userdata['role_id']
+            is_active = 1
             created_at = datetime.datetime.now()
             updated_at = datetime.datetime.now()
             
-            sql = "INSERT INTO users VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s)"
-            val = (username, password, nama_pengguna, nomor_hp, email, role_id, created_at, updated_at)
+            sql = "INSERT INTO users VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            val = (username, password, nama_pengguna, nomor_hp, email, role_id, is_active, created_at, updated_at)
             
             cursor.execute(sql, val)
             conn.commit()
@@ -229,11 +259,12 @@ def users(id = 0):
             nomor_hp = userdata['nomor_hp']
             email = userdata['email']
             role_id = userdata['role_id']
+            is_active = userdata['is_active']
             
             updated_at = datetime.datetime.now()
             
-            sql = "UPDATE users SET username=%s, nama_pengguna=%s, nomor_hp=%s, email=%s, role_id=%s WHERE id=%s"
-            val = (username, nama_pengguna, nomor_hp, email, role_id, user_id)
+            sql = "UPDATE users SET username=%s, nama_pengguna=%s, nomor_hp=%s, email=%s, role_id=%s, is_active=%s WHERE id=%s"
+            val = (username, nama_pengguna, nomor_hp, email, role_id, is_active, user_id)
             
             cursor.execute(sql, val)
             conn.commit()
@@ -606,7 +637,7 @@ def bugs(id = 0, id_dev = 0):
             # developers insertion
             open_DB()
             
-            last_data = get_last_data('bugs')
+            last_data = get_last_id('bugs')
             
             for developer in developers:
                 sql = "INSERT INTO assignees VALUES (NULL, %s, %s, %s, %s)"
