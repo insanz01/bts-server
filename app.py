@@ -85,6 +85,18 @@ def close_DB():
 #                                HELPER FUNCTION
 # ===========================================================================
 
+def get_last_data(table):
+    open_DB()
+    sql = "SELECT * FROM " + str(table) + " ORDER BY id DESC LIMIT 1"
+    
+    cursor.execute(sql)
+    data = cursor.fetchone()
+    
+    close_DB()
+    
+    response = {'id': data[0]}
+    
+    return response
 
 # ===========================================================================
 #                                   BATAS SUCI
@@ -158,8 +170,8 @@ def users(id = 0):
             for r in res:
                 userdata.append(r)
                 
-            container.append(userdata)
-            if len(container) > 0:
+            if len(userdata) > 0:
+                container.append(userdata)
                 code = status.HTTP_200_OK
             else:
                 code = status.HTTP_204_NO_CONTENT
@@ -258,9 +270,8 @@ def roles(id = 0):
                 for r in res:
                     roles_data.append(r)
                     
-                container.append(roles_data)
-                
-                if len(container) > 0:
+                if len(roles_data) > 0:
+                    container.append(roles_data)
                     code = status.HTTP_200_OK
                 else:
                     code = status.HTTP_204_NO_CONTENT
@@ -336,13 +347,13 @@ def projects(id = 0):
             
             for r in res:
                 projects_data.append(r)
-                
-            container.append(projects_data)
-            
-            if len(container) > 0:
+                           
+            if len(projects_data) > 0:
+                container.append(projects_data)
                 code = status.HTTP_200_OK
             else:
                 code = status.HTTP_204_NO_CONTENT
+                
         elif request.method == 'POST':
             projects_data = request.get_json()
             
@@ -362,6 +373,7 @@ def projects(id = 0):
             close_DB()
             
             code = status.HTTP_202_ACCEPTED
+            
         elif request.method == 'PUT':
             projects_data = request.get_json()
             
@@ -382,6 +394,7 @@ def projects(id = 0):
             close_DB()
             
             code = status.HTTP_202_ACCEPTED
+            
         elif request.method == 'DELETE':
             project_data = request.get_json()
             
@@ -414,7 +427,8 @@ def projects(id = 0):
 @cross_origin()
 @app.route(DEFAULT_ROOT + '/bugs', methods=['POST', 'GET', 'PUT', 'DELETE'])
 @app.route(DEFAULT_ROOT + '/bug/<id>', methods=['GET'])
-def bugs(id = 0):
+@app.route(DEFAULT_ROOT + '/bug/<id_dev>/developer', methods=['GET'])
+def bugs(id = 0, id_dev = 0):
     open_DB()
     
     container = []
@@ -424,7 +438,7 @@ def bugs(id = 0):
     
     if id != 0:
         if request.method == 'GET':
-            sql = "SELECT bugs.id, bugs.judul, bugs.keterangan, projects.judul as proyek, bugs.deadline, bug_status.nama as status, severities.nama as dampak, bugs.created_at, bugs.updated_at FROM bugs JOIN projects ON bugs.projects_id = projects.id JOIN bug_status ON bugs.status_id = bug_status.id JOIN severities ON bugs.severity_id ON severities.id WHERE bugs.id=%s"
+            sql = "SELECT bugs.id, bugs.judul, bugs.keterangan, projects.judul as proyek, bugs.deadline, bug_status.nama as status, severities.nama as dampak, bugs.created_at, bugs.updated_at FROM bugs JOIN projects ON bugs.projects_id = projects.id JOIN bug_status ON bugs.status_id = bug_status.id JOIN severities ON bugs.severity_id = severities.id WHERE bugs.id=%s"
             val = (id)
             cursor.execute(sql, val)
             bugs_data = cursor.fetchone()            
@@ -435,14 +449,34 @@ def bugs(id = 0):
                 code = status.HTTP_200_OK
             else:
                 code = status.HTTP_204_NO_CONTENT
+                
         else:     
             message = "Request Not Allowed"
             error.append(message)
             code = status.HTTP_405_METHOD_NOT_ALLOWED
     
+    elif id_dev != 0:
+        if request.method != 'GET':
+            bugs_data = list()
+            
+            sql = "SELECT bugs.id, bugs.judul, bugs.keterangan, projects.judul as proyek, bugs.deadline, bug_status.nama as status, severities.nama as dampak, bugs.created_at, bugs.updated_at FROM bugs JOIN projects ON bugs.projects_id = projects.id JOIN bug_status ON bugs.status_id = bug_status.id JOIN severities ON bugs.severity_id = severities.id JOIN assignees ON bugs.id = assignees.bug_id WHERE assignees.developer_id=%s"
+            val = (id_dev)
+            cursor.execute(sql, val)
+            res = cursor.fetchall()
+            close_DB()
+            
+            for r in res:
+                bugs_data.append(r)
+                
+            if len(bugs_data) > 0:
+                container.append(bugs_data)
+                code = status.HTTP_200_OK
+            else:
+                code = status.HTTP_204_NO_CONTENT
+                
     else:
         if request.method == 'GET':
-            sql = "SELECT bugs.id, bugs.judul, bugs.keterangan, projects.judul as proyek, bugs.deadline, bug_status.nama as status, severities.nama as dampak, bugs.created_at, bugs.updated_at FROM bugs JOIN projects ON bugs.projects_id = projects.id JOIN bug_status ON bugs.status_id = bug_status.id JOIN severities ON bugs.severity_id ON severities.id WHERE bugs.id=%s"
+            sql = "SELECT bugs.id, bugs.judul, bugs.keterangan, projects.judul as proyek, bugs.deadline, bug_status.nama as status, severities.nama as dampak, bugs.created_at, bugs.updated_at FROM bugs JOIN projects ON bugs.projects_id = projects.id JOIN bug_status ON bugs.status_id = bug_status.id JOIN severities ON bugs.severity_id = severities.id"
             cursor.execute(sql)
             res = cursor.fetchall()
             close_DB()
@@ -452,15 +486,16 @@ def bugs(id = 0):
             for r in res:
                 bugs_data.append(r)
                 
-            container.append(bugs_data)
-            
-            if len(container) > 0:
+            if len(bugs_data) > 0:
+                container.append(bugs_data)
                 code = status.HTTP_200_OK
             else:
                 code = status.HTTP_204_NO_CONTENT
                 
         elif request.method == 'POST':
             bugs_data = request.get_json()
+            
+            developers = bugs_data['developers']
             
             judul = bugs_data['judul']
             keterangan = bugs_data['keterangan']
@@ -471,14 +506,29 @@ def bugs(id = 0):
             created_at = datetime.datetime.now()
             updated_at = datetime.datetime.now()
             
-            sql = "INSERT INTO projects VALUES (NULL, %s, %s, %s, %s, %s, %s, %s)"
+            sql = "INSERT INTO bugs VALUES (NULL, %s, %s, %s, %s, %s, %s, %s)"
             val = (judul, keterangan, projects_id, deadline, status_id, severity_id, created_at, updated_at)
             
             cursor.execute(sql, val)
             conn.commit()
             close_DB()
             
+            # developers insertion
+            open_DB()
+            
+            last_data = get_last_data('bugs')
+            
+            for developer in developers:
+                sql = "INSERT INTO assignees VALUES (NULL, %s, %s, %s, %s)"
+                val = (last_data['id'], developer, created_at, updated_at)
+                
+                cursor.execute(sql, val)
+                conn.commit()
+            
+            close_DB()
+            
             code = status.HTTP_202_ACCEPTED
+            
         elif request.method == 'PUT':
             bugs_data = request.get_json()
             
@@ -500,6 +550,7 @@ def bugs(id = 0):
             close_DB()
             
             code = status.HTTP_202_ACCEPTED
+            
         elif request.method == 'DELETE':
             bugs_data = request.get_json()
             
@@ -513,6 +564,60 @@ def bugs(id = 0):
             close_DB()
             
             code = status.HTTP_202_ACCEPTED
+        
+    meta = {'copyright': 'Copyright 2021 Memofy Dev'}
+        
+    result = {'code': code, 'data': container, 'errors': error, 'meta': meta}
+    
+    return jsonify(result), code
+
+
+@cross_origin()
+@app.route(DEFAULT_ROOT + '/severities', methods=['GET'])
+@app.route(DEFAULT_ROOT + '/severity/<id>', methods=['GET'])
+def severity(id = 0):
+    open_DB()
+    
+    container = []
+    error = []
+    meta = {}
+    code = ''
+    
+    if id == 0 and request.method == 'GET':
+        severity_data = list()
+        
+        sql = "SELECT * FROM severities"
+        cursor.execute(sql)
+        
+        res = cursor.fetchall()
+        for r in res:
+            temp = {'id': r[0], 'nama': r[1], 'created_at': r[2], 'updated_at': r[3]}
+            severity_data.append(temp)    
+        
+        if len(severity_data) > 0:
+            container.append(severity_data)
+            code = status.HTTP_200_OK
+        else:
+            code = status.HTTP_204_NO_CONTENT
+            
+    elif request.method == 'GET':
+        sql = "SELECT * FROM severities WHERE id=%s"
+        val = (id)
+        cursor.execute(sql, val)
+        
+        severity_data = cursor.fetchone()
+        
+        if len(severity_data) > 0:
+            container.append(severity_data)
+            code = status.HTTP_200_OK
+        else:
+            code = status.HTTP_204_NO_CONTENT
+            
+    else:
+        message = "Request not allowed"
+        error.append(message)
+        
+        code = status.HTTP_405_METHOD_NOT_ALLOWED
         
     meta = {'copyright': 'Copyright 2021 Memofy Dev'}
         
